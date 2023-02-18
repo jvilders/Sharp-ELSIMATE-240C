@@ -1,0 +1,1 @@
+# Sharp-ELSIMATE-240C
