@@ -1,0 +1,15 @@
+{
+    "name": "calculator",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Sharp ELSI MATE EL-240C",
+    "main": "index.js",
+    "scripts": {
+        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js js/*.test.js"
+    },
+    "author": "Jona Vilders",
+    "license": "ISC",
+    "dependencies": {
+        "jest": "^29.4.3"
+    }
+}
