@@ -18,9 +18,9 @@ function updateDisplay(value){
 
     const dotPosition = valueWithoutSign.indexOf('.');
 
-    previousDotCell.classList.add('hidden')
+    previousDotCell.classList.add('hidden');
 
-    const dotCell = displayNumberCells[dotPosition - (valueWithoutSign.length - 1)].children[1]
+    const dotCell = displayNumberCells[(valueWithoutSign.length - 1) - dotPosition].children[1];
     dotCell.classList.remove('hidden');
     previousDotCell = dotCell;
 }

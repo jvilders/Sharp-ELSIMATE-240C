@@ -221,8 +221,9 @@ body {
     background-color: var(--clr--brightred);
 }
 
-#calculator-keypad > button:is(:hover, :focus) {
-    background-color: var(--clr--yellow);
+#calculator-keypad > button:is(:hover) {
+    /* background-color: hsla(0, 0%, 0%, 0.5); */
+    opacity: 0.9;
     box-shadow: 0.0625rem 0.0625rem 0.0625rem var(--clr--black);
     cursor: pointer;
 }
