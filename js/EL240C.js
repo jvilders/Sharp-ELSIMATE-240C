@@ -218,7 +218,7 @@ class Calculator {
             this.operands[1] = this.truncateNumber(this.unaryOperators['√'].call(this, this.operands[0]))
             this.operandDisplayed = 1;
         } else {
-            this.operands[this.operandDisplayed] = this.unaryOperators[chr].call(this, this.operands[this.operandDisplayed]).toString();
+            this.operands[this.operandDisplayed] = this.truncateNumber(this.unaryOperators[chr].call(this, this.operands[this.operandDisplayed]));
         }
 
         this.overwriteNumber = chr === '√'

@@ -282,6 +282,31 @@ test('overwrite number after =', () => {
     expect(Number(calculator.displayValue)).toBe(1);
 });
 
+describe('√', () => {
+    test('test functionality', () => {
+        inputDevice.inputSequence('2 + 7 ='); // previous = 7
+        inputDevice.input('√');
+        expect(Number(calculator.displayValue)).toBe(Math.sqrt(2 + 7));
+
+        inputDevice.inputSequence('1 0'); // tests that the value is overwritten, not added to by inputting a number
+        expect(Number(calculator.displayValue)).toBe(10);
+
+        inputDevice.inputSequence('+ =');
+        expect(Number(calculator.displayValue)).toBe(7 + 10);
+
+        inputDevice.input('=');
+        expect(Number(calculator.displayValue)).toBe(7 + 10 + 10);
+    });
+
+    test('truncating', () => {
+        inputDevice.inputSequence('2 + 6 √');
+        expect(Number(calculator.displayValue)).toBeCloseTo(Math.sqrt(6));
+
+        inputDevice.input('=');
+        expect(Number(calculator.displayValue)).toBeCloseTo(2 + Math.sqrt(6));
+    });
+})
+
 test('test square root (√)', () => {
     inputDevice.inputSequence('2 + 7 ='); // previous = 7
     inputDevice.input('√');

@@ -4,7 +4,7 @@ As the closer for the foundational course of the [Odin Project](https://www.theo
 
 ![Sharp ELSI MATE EL-240C calculator on wooden desk](./EL240C.jpg)
 
-The main challenge was figuring out a mental model for this calculator; how does it 'think', what does it 'remember' as inputs come in? That proved more difficult than I thought as I repeatedly found new functionality and behavior during my physical testing with the calculator. As far as official documentation goes, there is a [2-page manual for the EL-240S](https://www.manualslib.com/manual/489333/Sharp-El-240s.html?page=1#manual) which wasn't of much use, nor did it document all the functionality of this thing. The extent of my frustration with this thing is borne out by the 83 unit tests for what was supposed to be a simple calculator. If you're interested, I've documented more of the logic in [logic.md](./logic.md).
+The main challenge was figuring out a mental model for this calculator; how does it 'think', what does it 'remember' as inputs come in? That proved more difficult than I thought as I repeatedly found new functionality and behavior during my physical testing with the calculator. As far as official documentation goes, there is a [2-page manual for the EL-240S](https://www.manualslib.com/manual/489333/Sharp-El-240s.html?page=1#manual) which wasn't of much use, nor did it document all the functionality of this thing. The extent of my frustration with this thing is borne out by the 85 unit tests for what was supposed to be a simple calculator. If you're interested, I've documented more of the logic in [logic.md](./logic.md).
 
 ## Three learnings per language
 
