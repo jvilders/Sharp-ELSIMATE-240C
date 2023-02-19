@@ -9,7 +9,18 @@ class calculatorInputDevice{
     input(s){
         this.calculator.input(s)
         if(this.debug){
-            console.log({input, ...calculator.debugState()});
+            console.log(
+                {
+                    input: s,
+                    displayed: this.calculator.displayValue,
+                    previous: this.calculator.previous,
+                    previousOperation: this.calculator.previousOperation,
+                    operands: this.calculator.operands.toString(),
+                    operation: this.calculator.operation,
+                    operandDisplayed: this.calculator.operandDisplayed,
+                    memoryRegister: this.calculator.memoryRegister,
+                }
+            );
         }
     }
 
@@ -576,7 +587,7 @@ describe('Memory buttons', () => {
         expect(Number(calculator.displayValue)).toBe(0);
     });
 
-    test('Memory operator applied after calculation', () => {
+    test('Memory operator is applied after calculation', () => {
         inputDevice.inputSequence('2 + 3 ± ='); // result = -1, previous = -3
         inputDevice.inputSequence('+ M-');
         expect(Number(calculator.displayValue)).toBe(-3 + -1);
@@ -601,6 +612,18 @@ describe('Memory buttons', () => {
         inputDevice.input('=');
         expect(Number(calculator.displayValue)).toBe(10);
     });
+
+    test('Reading memory overwrites current operand if present', () => {
+        inputDevice.inputSequence('- 2 M+');
+        inputDevice.inputSequence('9 RCM');
+        expect(Number(calculator.displayValue)).toBe(-2);
+    })
+
+    test('Reading preserves operation', () => {
+        inputDevice.inputSequence('- 2 M+');
+        inputDevice.inputSequence('9 × RCM =');
+        expect(Number(calculator.displayValue)).toBe(-18);
+    })
 });
 
 describe('Precision limits', () => {
