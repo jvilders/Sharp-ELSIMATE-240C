@@ -1,4 +1,8 @@
 class Calculator {
+    // The EL240C has an 8+1 display, with 1 cell reserved for showing the sign in case of a negative 
+    // number and for showing an "M" and "E" for respectively if the memory register is filled and if 
+    // the calculator is in an error state. For this class this is only used for truncating numbers 
+    // and disallowing further keypad input if the maximum number of inputs was reached.
     MAXDIGITS = 8;
 
     constructor(){
@@ -16,7 +20,7 @@ class Calculator {
         }
 
         this.memoryButtons = {
-            'RCM': this.RCM,
+            'RCM': this.readOrClearMemory,
             'M+': this.memoryAdd,
             'M-': this.memorySubtract,
         };
@@ -27,8 +31,8 @@ class Calculator {
         };
 
         this.clearingButtons = {
-            'CA': this.CA,
-            'CCE': this.CCE,
+            'CA': this.clearAll,
+            'CCE': this.clearOrClearEntry
         };
 
         this.keyPadButtons = new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']);
@@ -46,11 +50,11 @@ class Calculator {
     }
 
     reset(){
-        this.operands = ["0", null];
-        this.operation = null;
-
         this.previous = "0";
         this.previousOperation = this.add;
+
+        this.operands = ["0", null];
+        this.operation = null;
 
         this.operandDisplayed = 0;
 
@@ -86,12 +90,12 @@ class Calculator {
         }
     }
 
-    _isValidInput(chr){
+    isValidInput(chr){
         return this.validInputs.has(chr)
     }
 
-    _truncateNumber(n){
-        if(Math.abs(n) < (1 / (10 ** (this.MAXDIGITS - 1))) || (!isFinite(n))){
+    truncateNumber(n){
+        if(Math.abs(n) < (1 / (10 ** (this.MAXDIGITS - 1))) || (!isFinite(n))){ // second case is for catching divisions by 0
             return "0"
         } else if (Math.abs(n) > ((10 ** this.MAXDIGITS) - 1)){
             this.inErrorState = true;
@@ -106,11 +110,18 @@ class Calculator {
         }
     }
 
-    CA(){
+    clearAll(){
+        /**
+         * CA = Clear All. Fully resets the calculator.
+         */
         this.reset();
     }
 
-    CCE(){
+    clearOrClearEntry(){
+        /**
+         * Clear/Clear Entry. Can undo an error state without resetting all calculator state. Otherwise 
+         * erases most recently entered operand.
+         */
         if(this.inErrorState){
             this.inErrorState = false;
             return;
@@ -127,7 +138,11 @@ class Calculator {
 
     // memory functions
 
-    RCM(){
+    readOrClearMemory(){
+        /**
+         * Read/Clear Memory. Pressing once will insert the value in the memory register as an operand. Pressing twice 
+         * consecutively will clear the memory register.
+         */
         if(this.hasReadMemory){
             this.memoryRegister = "0";
             this.hasReadMemory = false;
@@ -142,43 +157,24 @@ class Calculator {
     }
 
     memoryAdd(){
-        this._memoryOperation(this.add)
+        this.memoryOperation(this.add)
     }
 
     memorySubtract(){
-        this._memoryOperation(this.subtract.bind(this)); // this.subtract calls this.add, needs reference to this
+        this.memoryOperation(this.subtract.bind(this)); // this.subtract calls this.add, needs reference to this
     }
 
-    _memoryOperation(operator){
+    memoryOperation(operator){
+        /**
+         * Due to the extra operation after called the shared calculation function (which sets a new value for 
+         * the first operand and sets the display to that operand), the value assigned to the memory register 
+         * can differ from the displayed value (example in unit tests).
+         */
         if(this.operation !== null){
-            let lOperand
-            if(this.operands[1] === null){
-                if(this.operation === this.divide){
-                    lOperand = "1";
-                }else if(this.operation === this.multiply){
-                    lOperand = this.operands[0];
-                }else{
-                    lOperand = this.previous
-                }
-            }else{
-                lOperand = this.operands[0]
-            }
-
-            const rOperand = this.operands[this.operandDisplayed];
-            
-            this.operands[0] = this._truncateNumber(this.operation.call(this, lOperand, rOperand));
+            const [_, lOperand, operation, rOperand] = this.getRegularEqualsComponents();
+            this.calculate("0", lOperand, operation, rOperand);
         }
-        
-        this.memoryRegister =  this._truncateNumber(operator(this.memoryRegister, this.operands[0]));
-
-
-        this.previous = "0";
-        this.previousOperation = this.add;
-        this.operandDisplayed = 0;
-        this.operation = null;
-        this.operands[1] = null;
-        this.overwriteNumber = true;
-
+        this.memoryRegister = this.truncateNumber(operator(this.memoryRegister, this.operands[0]));
     }
 
     // key pad button function
@@ -212,24 +208,17 @@ class Calculator {
         this.overwriteNumber = false;
     }
 
-    // unary operator function
-
     unaryFunction(chr){
-        let targetOperand = this.operands[1] === null ? 0 : 1
-
         if(chr === '√' && this.operation !== null && this.operands[1] === null){
             // if after an operator, special behavior: apply sqrt to first operand, insert as second
-            this.operands[1] = this._truncateNumber(this.unaryOperators['√'].call(this, this.operands[0]))
-            // this.operands[1] = this.unaryOperators['√'].call(this, this.operands[0]).toString();
+            this.operands[1] = this.truncateNumber(this.unaryOperators['√'].call(this, this.operands[0]))
             this.operandDisplayed = 1;
         } else {
-            this.operands[targetOperand] = this.unaryOperators[chr].call(this, this.operands[targetOperand]).toString();
+            this.operands[this.operandDisplayed] = this.unaryOperators[chr].call(this, this.operands[this.operandDisplayed]).toString();
         }
 
         this.overwriteNumber = chr === '√'
     }
-
-    // binary operator function
 
     binaryFunction(chr){
         if(this.operands[1] !== null){
@@ -239,20 +228,26 @@ class Calculator {
         this.operation = this.binaryOperators[chr];
     }
 
-    equalsEvaluation(){
-        // =
+    calculate(newPrevious, lOperand, operation, rOperand){
+        this.operands[0] = this.truncateNumber(operation.call(this, lOperand, rOperand));
+        
+        this.previous = newPrevious;
+        this.previousOperation = this.operation || this.previousOperation;
+        this.operandDisplayed = 0;
+        this.operation = null;
+        this.operands[1] = null;
+        this.overwriteNumber = true;
+    }
 
-        // possible calculator states at this time:
-        // 1. [Number]
-        // 2. [Number operator]
-        // 3. [Number operator Number]
-        const selectedOperation = this.operation === null ? this.previousOperation : this.operation;
-        let lOperand, rOperand, newPrevious;
-
+    getRegularEqualsComponents(){
+        let newPrevious, lOperand, operation, rOperand;
+        
+        operation = this.operation
         if (this.operation === null) {
-            lOperand = this.operands[0];
-            rOperand = this.previous;
             newPrevious = this.previous;
+            lOperand = this.operands[0];
+            operation = this.previousOperation;
+            rOperand = this.previous;
         } else if (this.operands[1] === null) {
             if (this.operation === this.divide) {
                 lOperand = "1";
@@ -261,7 +256,7 @@ class Calculator {
             } else {
                 lOperand = this.previous
             }
-
+    
             rOperand = this.operands[0]
             newPrevious = this.operands[0]
         } else {
@@ -269,30 +264,46 @@ class Calculator {
             rOperand = this.operands[1]
             newPrevious = this.operation === this.multiply ? this.operands[0] : this.operands[1]
         }
+    
+        return [newPrevious, lOperand, operation, rOperand]
+    }
 
-        // 1: previous = rOperand
-        // 2: previous = lOperand
-        // 3: previous = this.operation === this.multiply ? lOperand : rOperand
+    equalsEvaluation(){
+        const [newPrevious, lOperand, operation, rOperand] = this.getRegularEqualsComponents();
+        this.calculate(newPrevious, lOperand, operation, rOperand);
+    }
 
-        this.operands[0] = this._truncateNumber(selectedOperation.call(this, lOperand, rOperand));
-        // this.operands[0] = selectedOperation.call(this, lOperand, rOperand).toString();
-        this.previous = newPrevious;
-        this.previousOperation = this.operation || this.previousOperation;
-
-
-        this.operandDisplayed = 0;
-        this.operation = null
-        this.operands[1] = null;
-        this.overwriteNumber = true;
+    getPercentageEqualsComponents(){
+        let newPrevious, lOperand, rOperand;
+    
+        if (this.operands[1] === null) {
+            if (this.operation === this.divide) {
+                lOperand = "1";
+                rOperand = this.operands[0] / 100;
+            } else {
+                lOperand = this.operands[0] / 100;
+                rOperand = this.operands[0];
+            }
+    
+            newPrevious = this.operands[0];
+        } else {
+            lOperand = this.operands[0];
+    
+            newPrevious = this.operands[0]
+            if (this.operation === this.multiply) {
+                rOperand = this.operands[1] / 100;
+            } else if (this.operation === this.divide) {
+                rOperand = this.operands[1] / 100;
+                newPrevious = this.operands[1];
+            } else {
+                rOperand = this.operands[0] / 100 * this.operands[1];
+            }
+        }
+    
+        return [newPrevious, lOperand, this.operation, rOperand]
     }
 
     percentageEvaluation(){
-        // =
-
-        // possible calculator states at this time:
-        // 1. [Number]
-        // 2. [Number operator]
-        // 3. [Number operator Number]
         switch(true){
             case this.operation === null:
                 this.operands[0] = "0";
@@ -301,47 +312,12 @@ class Calculator {
                 return;
         }
 
-        const selectedOperation = this.operation;
-        let lOperand, rOperand, newPrevious;
-
-        if (this.operands[1] === null) {
-            if (this.operation === this.divide) {
-                lOperand = "1";
-                rOperand = this.operands[0] / 100;
-            } else {
-                lOperand = this.operands[0] / 100;
-                rOperand = this.operands[0]
-            }
-
-            newPrevious = this.operands[0]
-        } else {
-            lOperand = this.operands[0]
-
-            if (this.operation === this.multiply){
-                rOperand = this.operands[1] / 100
-            } else if(this.operation === this.divide){
-                rOperand = this.operands[1] / 100
-            } else {
-                rOperand = this.operands[0] / 100 * this.operands[1]
-            }
-
-            newPrevious = this.operation === this.divide ? this.operands[1] : this.operands[0]
-        }
-
-        this.operands[0] = this._truncateNumber(selectedOperation.call(this, lOperand, rOperand));
-        // this.operands[0] = selectedOperation.call(this, lOperand, rOperand).toString();
-        this.previous = newPrevious;
-        this.previousOperation = this.operation
-
-        this.operandDisplayed = 0;
-        this.operation = null
-        this.operands[1] = null;
-        this.overwriteNumber = true;
+        const [newPrevious, lOperand, operation, rOperand] = this.getPercentageEqualsComponents();
+        this.calculate(newPrevious, lOperand, operation, rOperand);
     }
 
-
     input(chr){
-        if(!this._isValidInput(chr)){
+        if(!this.isValidInput(chr)){
             throw new Error(`Input ${chr} is not a valid input`);
         }
 
@@ -388,7 +364,7 @@ class Calculator {
         }
     }
 
-    // consistent operators
+    // consistent binary operators
     add(x, y){
         return Number(x) + Number(y)
     }
@@ -397,7 +373,7 @@ class Calculator {
         return this.add(x, -y)
     }
 
-    // operators with special behavior in situation [Number [multiply/divide operation] null] + '='
+    // operators with special behavior in situation [Number [multiply/divide operation] null] + [=/%]
     multiply(x, y){
         return Number(x) * Number(y)
     }
