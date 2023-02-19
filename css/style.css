@@ -8,12 +8,12 @@
 
 @font-face {
     font-family: alarmClock;
-    src: url(../fonts/alarm\ clock.ttf);
+    src: url(../fonts/alarm\ clock.woff);
 }
 
 @font-face {
     font-family: SerpentineSansLight;
-    src: url(../fonts/Serpentine\ Sans\ ICG\ Light.ttf);
+    src: url(../fonts/Serpentine\ Sans\ ICG\ Light.woff);
 }
 
 /* root variables */
