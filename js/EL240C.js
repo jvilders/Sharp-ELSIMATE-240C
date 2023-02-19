@@ -171,7 +171,7 @@ class Calculator {
          * can differ from the displayed value (example in unit tests).
          */
         if(this.inputState !== 'numberOnly'){
-            const [_, lOperand, operation, rOperand] = this.getCalcStuff(
+            const [_, lOperand, operation, rOperand] = this.getCalculationInput(
                 this.inputState,
                 this.operation,
                 '=',
@@ -232,7 +232,7 @@ class Calculator {
         this.operation = this.binaryOperators[chr];
     }
 
-    getCalcStuff(status, operator, evaluator){
+    getCalculationInput(status, operator, evaluator){
         if(status === "numberOnly"){
             return [this.previous, this.operands[0], this.previousOperation, this.previous];
         }
@@ -299,7 +299,7 @@ class Calculator {
     }
 
     equalsEvaluation(){
-        const [newPrevious, lOperand, operation, rOperand] = this.getCalcStuff(
+        const [newPrevious, lOperand, operation, rOperand] = this.getCalculationInput(
             this.inputState,
             this.operation,
             '=',
@@ -317,7 +317,7 @@ class Calculator {
                 return;
         }
 
-        const [newPrevious, lOperand, operation, rOperand] = this.getCalcStuff(
+        const [newPrevious, lOperand, operation, rOperand] = this.getCalculationInput(
             this.inputState,
             this.operation,
             '%',
