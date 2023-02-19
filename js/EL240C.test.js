@@ -1,21 +1,30 @@
 import Calculator from './EL240C.js';
 
-function calculatorInput(calculator, debug){
-    function inner(input){
-        calculator.input(input);
-        if(debug){
+class calculatorInputDevice{
+    constructor(calculator, debug){
+        this.calculator = calculator;
+        this.debug = debug;
+    }
+
+    input(s){
+        this.calculator.input(s)
+        if(this.debug){
             console.log({input, ...calculator.debugState()});
         }
     }
-    return inner;
+
+    inputSequence(s){
+        for(let inputChr of s.split(' ')){
+            this.input(inputChr);
+        }
+    }
 }
 
-let calculator = new Calculator();
-let inputDevice = calculatorInput(calculator);
-
+const calculator = new Calculator();
+const inputDevice = new calculatorInputDevice(calculator);
 
 beforeEach(() => {
-    calculator.reset();
+    inputDevice.calculator.reset();
 });
 
 // All criterion values used in the the tests are obtained from punching in the 
@@ -29,45 +38,27 @@ beforeEach(() => {
 // how the number was arrived it, I've kept them this way as much as possible.
 
 test('throw error on invalid input', () => {
-    expect(() => inputDevice('(')).toThrowError();
+    expect(() => inputDevice.input('(')).toThrowError();
 })
 
 describe('[Number] [operator] [Number] =', () => {
     test('Addition', () => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('=');
-
-        // previous = 3, unused
-
+        inputDevice.inputSequence('2 + 3 =');
         expect(Number(calculator.displayValue)).toBe(5);
     });
 
     test('Subtraction', () => {
-        inputDevice('2');
-        inputDevice('-');
-        inputDevice('3');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 - 3 =');
         expect(Number(calculator.displayValue)).toBe(-1);
     });
 
     test('Multiplication', () => {
-        inputDevice('2');
-        inputDevice('×');
-        inputDevice('3');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 × 3 =');
         expect(Number(calculator.displayValue)).toBe(6);
     });
 
     test('Division', () => {
-        inputDevice('2');
-        inputDevice('÷');
-        inputDevice('3');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 ÷ 3 =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 / 3);
     });
 });
@@ -75,413 +66,252 @@ describe('[Number] [operator] [Number] =', () => {
 describe('No history [Number] [operator] =', () => {
     // previous = 0
     test('Addition', () => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 + =');
         expect(Number(calculator.displayValue)).toBe(2);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(2 + 2 + 2);
     });
 
     test('Subtraction', () => {
-        inputDevice('2');
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 - =');
         expect(Number(calculator.displayValue)).toBe(-2);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(-2 - 2 - 2);
     });
 
     test('Multiplication', () => {
-        inputDevice('2');
-        inputDevice('×');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 × =');
         expect(Number(calculator.displayValue)).toBe(4);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(4 * 2 * 2);
     });
 
     test('Division', () => {
-        inputDevice('4');
-        inputDevice('÷');
-        inputDevice('=');
-
+        inputDevice.inputSequence('4 ÷ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 4);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 4 / 4 / 4);
     });
 });
 
 describe('With + and = history [Number] [operator] =', () => {
     beforeEach(() => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('=');
-
-        // previous = 3
+        inputDevice.inputSequence('2 + 3 ='); // previous = 3
     });
 
     test('Addition', () => {
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBe(3 + 5);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(3 + 5 + 5 + 5);
     });
 
     test('Subtraction', () => {
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('- =');
         expect(Number(calculator.displayValue)).toBe(3 - 5);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(3 - 5 - 5 - 5);
     });
 
     test('Multiplication', () => {
-        inputDevice('×');
-        inputDevice('=');
-
+        inputDevice.inputSequence('× =');
         expect(Number(calculator.displayValue)).toBe(5 * 5);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(5 * 5 * 5 * 5);
     });
 
     test('Division', () => {
-        inputDevice('÷');
-        inputDevice('=');
-
+        inputDevice.inputSequence('÷ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 5);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 5 / 5 / 5);
     });
 });
 
 describe('With - and = history [Number] [operator] =', () => {
     beforeEach(() => {
-        inputDevice('2');
-        inputDevice('-');
-        inputDevice('3');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 - 3 =');
         // previous = 3
     });
 
     test('Addition', () => {
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBe(3 + -1);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(3 + -1 + -1 + -1);
     });
 
     test('Subtraction', () => {
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('- =');
         expect(Number(calculator.displayValue)).toBe(3 - -1);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(3 - -1 - -1 - -1);
     });
 
     test('Multiplication', () => {
-        inputDevice('×');
-        inputDevice('=');
-
+        inputDevice.inputSequence('× =');
         expect(Number(calculator.displayValue)).toBe(-1 * -1); // special behavior, ignores previous value
 
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBe(-1 * -1 * -1);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(-1 * -1 * -1 * -1);
     });
 
     test('Division', () => {
-        inputDevice('÷');
-        inputDevice('=');
-
+        inputDevice.inputSequence('÷ =');
         expect(Number(calculator.displayValue)).toBe(1 / -1); // special behavior, ignores previous number
 
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBe(1 / -1 / -1);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(1 / -1 / -1 / -1);
     });
 });
 
 describe('With × and = history [Number] [operator] =', () => {
     beforeEach(() => {
-        inputDevice('2');
-        inputDevice('×');
-        inputDevice('3');
-        inputDevice('=');
-
-        // previous = 2, special behavior of ×
+        inputDevice.inputSequence('2 × 3 =');
+        // previous = 2, special behavior of × to 'pick' left instead of right operand when evaluation operator is =.
     });
 
     test('Addition', () => {
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBe(2 + 6);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(2 + 6 + 6 + 6);
     });
 
     test('Subtraction', () => {
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('- =');
         expect(Number(calculator.displayValue)).toBe(2 - 6);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(2 - 6 - 6 - 6);
     });
 
     test('Multiplication', () => {
-        inputDevice('×');
-        inputDevice('=');
+        inputDevice.inputSequence('× =');
+        expect(Number(calculator.displayValue)).toBe(6 * 6); // special behavior, ignores previous number and uses first operand instead
 
-        expect(Number(calculator.displayValue)).toBe(6 * 6); // special behavior, ignores previous number
-
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBe(6 * 6 * 6);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBe(6 * 6 * 6 * 6);
     });
 
     test('Division', () => {
-        inputDevice('÷');
-        inputDevice('=');
+        inputDevice.inputSequence('÷ =');
+        expect(Number(calculator.displayValue)).toBeCloseTo(1 / 6); // special behavior, ignores previous number and uses 1 instead
 
-        expect(Number(calculator.displayValue)).toBeCloseTo(1 / 6); // special behavior, ignores previous number
-
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo(1 / 6 / 6);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 6 / 6 / 6);
     });
 });
 
 describe('With ÷ and = history [Number] [operator] =', () => {
     beforeEach(() => {
-        inputDevice('2');
-        inputDevice('÷');
-        inputDevice('3');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 ÷ 3 =');
         // previous = 3
     });
 
     test('Addition', () => {
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 / 3 + 3);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 / 3 + 3 + 2 / 3 + 2 / 3);
     });
 
     test('Subtraction', () => {
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('- =');
         expect(Number(calculator.displayValue)).toBeCloseTo(3 - 2 / 3);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(3 - 2 / 3 - 2 / 3 - 2 / 3);
     });
 
     test('Multiplication', () => {
-        inputDevice('×');
-        inputDevice('=');
-
+        inputDevice.inputSequence('× =');
         expect(Number(calculator.displayValue)).toBeCloseTo((2/3) ** 2);  // special behavior, ignores previous number
 
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo((2/3) ** 3);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo((2/3) ** 4);
     });
 
     test('Division', () => {
-        inputDevice('÷');
-        inputDevice('=');
-
+        inputDevice.inputSequence('÷ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / (2/3));  // special behavior, ignores previous number
 
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo(1 / (2/3) / (2/3));
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / (2/3) / (2/3) / (2/3));
     });
 });
 
 test('[Number] =', () => {
-    inputDevice('2');
-    inputDevice('=');
-
+    inputDevice.inputSequence('2 =');
     expect(Number(calculator.displayValue)).toBe(2);
 
-    inputDevice('1');
-
-    expect(Number(calculator.displayValue)).toBe(1); // should have overwritten
+    inputDevice.input('1'); // should overwrite
+    expect(Number(calculator.displayValue)).toBe(1);
 });
 
 test('No leading 0 values', () => {
-    inputDevice('0');
-    inputDevice('1');
-
+    inputDevice.inputSequence('0 1');
     expect(Number(calculator.displayValue)).toBe(1);
 })
 
 test('overwrite number after =', () => {
-    inputDevice('2');
-    inputDevice('+');
-    inputDevice('3');
-    inputDevice('=');
-    inputDevice('1');
-
+    inputDevice.inputSequence('2 + 3 = 1');
     expect(Number(calculator.displayValue)).toBe(1);
 });
 
 test('test square root (√)', () => {
-    inputDevice('2');
-    inputDevice('+');
-    inputDevice('7'); // previous = 7
-    inputDevice('='); // 9
-    inputDevice('√'); // 3
+    inputDevice.inputSequence('2 + 7 ='); // previous = 7
+    inputDevice.input('√');
+    expect(Number(calculator.displayValue)).toBe(Math.sqrt(2 + 7));
 
-    expect(Number(calculator.displayValue)).toBe(3);
-
-    inputDevice('1'); // tests that the value is overwritten, not added to by inputting a number
-    inputDevice('0');
-
+    inputDevice.inputSequence('1 0'); // tests that the value is overwritten, not added to by inputting a number
     expect(Number(calculator.displayValue)).toBe(10);
 
-    inputDevice('+');
-    inputDevice('='); // 17
+    inputDevice.inputSequence('+ =');
+    expect(Number(calculator.displayValue)).toBe(7 + 10);
 
-    expect(Number(calculator.displayValue)).toBe(17);
-
-    inputDevice('='); // 27
-
-    expect(Number(calculator.displayValue)).toBe(27);
+    inputDevice.input('=');
+    expect(Number(calculator.displayValue)).toBe(7 + 10 + 10);
 });
 
 test('test plusminus (±)', () => {
-    inputDevice('2');
-    inputDevice('+');
-    inputDevice('±'); // modifies number before operator
-    inputDevice('='); // 0 + -2, previous = -2
-
+    inputDevice.inputSequence('2 + ± ='); // result = -2, previous = -2
     expect(Number(calculator.displayValue)).toBe(-2);
 
-    inputDevice('='); // -4
-
+    inputDevice.input('=');
     expect(Number(calculator.displayValue)).toBe(-2 + -2);
 });
 
 describe('[Number] [operator] [Number] %', () => {
     test('Addition', () => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('%');
-
-        // previous = 2, unused
-
+        inputDevice.inputSequence('2 + 3 %');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 + (2 / 100 * 3));
     });
 
     test('Subtraction', () => {
-        inputDevice('2');
-        inputDevice('-');
-        inputDevice('3');
-        inputDevice('%');
-
+        inputDevice.inputSequence('2 - 3 %');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 - (2 / 100 * 3));
     });
 
     test('Multiplication', () => {
-        inputDevice('2');
-        inputDevice('×');
-        inputDevice('3');
-        inputDevice('%');
-
+        inputDevice.inputSequence('2 × 3 %');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 * (3 / 100));
     });
 
     test('Division', () => {
-        inputDevice('2');
-        inputDevice('÷');
-        inputDevice('3');
-        inputDevice('%');
-
+        inputDevice.inputSequence('2 ÷ 3 %');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 / (3 / 100));
     });
 });
@@ -489,406 +319,248 @@ describe('[Number] [operator] [Number] %', () => {
 describe('No history [Number] [operator] %', () => {
     // previous = 0
     test('Addition', () => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('%');
-
-        expect(Number(calculator.displayValue)).toBe(2); // special behavior, doesn't do anything
+        inputDevice.inputSequence('2 + %');
+        expect(Number(calculator.displayValue)).toBe(2); // special behavior of %, doesn't do anything
     });
 
     test('Subtraction', () => {
-        inputDevice('2');
-        inputDevice('-');
-        inputDevice('%');
-
+        inputDevice.inputSequence('2 - %');
         expect(Number(calculator.displayValue)).toBe(2); // special behavior, doesn't do anything
     });
 
     test('Multiplication', () => {
-        inputDevice('2');
-        inputDevice('×');
-        inputDevice('%');
-
+        inputDevice.inputSequence('2 × %');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 * 2 / 100);
     });
 
     test('Division', () => {
-        inputDevice('4');
-        inputDevice('÷');
-        inputDevice('%');
-
+        inputDevice.inputSequence('4 ÷ %');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 4 * 100);
     });
 });
 
 describe('With + and % history [Number] [operator] =', () => {
     beforeEach(() => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('%');
-
-        // previous = 2
+        inputDevice.inputSequence('2 + 3 %'); // previous = 2
     });
 
     test('Addition', () => {
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 + 2.06);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 + 2.06 + 2.06  + 2.06);
     });
 
     test('Subtraction', () => {
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('- =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 - 2.06);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 - 2.06 - 2.06  - 2.06);
     });
 
     test('Multiplication', () => {
-        inputDevice('×');
-        inputDevice('=');
-
+        inputDevice.inputSequence('× =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2.06 * 2.06); // special behavior of ×, ignores previous number
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2.06 * 2.06 * 2.06 * 2.06);
     });
 
     test('Division', () => {
-        inputDevice('÷');
-        inputDevice('=');
-
+        inputDevice.inputSequence('÷ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 2.06); // special behavior of ÷, ignores previous number
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 2.06 / 2.06 / 2.06);
     });
 });
 
 describe('With - and % history [Number] [operator] =', () => {
     beforeEach(() => {
-        inputDevice('2');
-        inputDevice('-');
-        inputDevice('3');
-        inputDevice('%');
-
-        // previous = 2
+        inputDevice.inputSequence('2 - 3 %'); // previous = 2
     });
 
     test('Addition', () => {
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 + 1.94);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 + 1.94 + 1.94 + 1.94);
     });
 
     test('Subtraction', () => {
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('- =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 - 1.94);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 - 1.94 - 1.94 - 1.94);
     });
 
     test('Multiplication', () => {
-        inputDevice('×');
-        inputDevice('=');
-
+        inputDevice.inputSequence('× =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1.94 * 1.94); // special behavior, ignores previous value
 
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo(1.94 * 1.94 * 1.94);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1.94 * 1.94 * 1.94 * 1.94);
     });
 
     test('Division', () => {
-        inputDevice('÷');
-        inputDevice('=');
-
+        inputDevice.inputSequence('÷ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 1.94); // special behavior, ignores previous number
 
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo(1 / 1.94 / 1.94);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 1.94 / 1.94 / 1.94);
     });
 });
 
 describe('With × and % history [Number] [operator] =', () => {
     beforeEach(() => {
-        inputDevice('2');
-        inputDevice('×');
-        inputDevice('3');
-        inputDevice('%');
-
-        // previous = 2
+        inputDevice.inputSequence('2 × 3 %'); // previous = 2, ×'s selection for previous flips if evaluation operator is %
     });
 
     test('Addition', () => {
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 + 0.06);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 + 0.06 + 0.06 + 0.06);
     });
 
     test('Subtraction', () => {
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('- =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 - 0.06);
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(2 - 0.06 - 0.06 - 0.06);
     });
 
     test('Multiplication', () => {
-        inputDevice('×');
-        inputDevice('=');
+        inputDevice.inputSequence('× =');
+        expect(Number(calculator.displayValue)).toBeCloseTo(0.06 * 0.06);
 
-        expect(Number(calculator.displayValue)).toBeCloseTo(0.06 * 0.06); // special behavior, ignores previous number
-
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo(0.06 * 0.06 * 0.06);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(0.06 * 0.06 * 0.06 * 0.06);
     });
 
     test('Division', () => {
-        inputDevice('÷');
-        inputDevice('=');
+        inputDevice.inputSequence('÷ =');
+        expect(Number(calculator.displayValue)).toBeCloseTo(1 / 0.06);
 
-        expect(Number(calculator.displayValue)).toBeCloseTo(1 / 0.06); // special behavior, ignores previous number
-
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo(1 / 0.06 / 0.06);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / 0.06 / 0.06 / 0.06);
     });
 });
 
 describe('With ÷ and % history [Number] [operator] =', () => {
     beforeEach(() => {
-        inputDevice('2');
-        inputDevice('÷');
-        inputDevice('3');
-        inputDevice('%');
-
-        // previous = 3, special behavior of ÷ if using %.
+        inputDevice.inputSequence('2 ÷ 3 %'); // previous = 3, ÷'s selection for previous flips if evaluation operator is %
     });
 
     test('Addition', () => {
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(3 + (2 / 3 * 100));
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(3 + (2 / 3 * 100) + (2 / 3 * 100) + (2 / 3 * 100));
     });
 
     test('Subtraction', () => {
-        inputDevice('-');
-        inputDevice('=');
-
+        inputDevice.inputSequence('- =');
         expect(Number(calculator.displayValue)).toBeCloseTo(3 - (2 / 3 * 100));
 
-        inputDevice('=');
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(3 - (2 / 3 * 100) - (2 / 3 * 100) - (2 / 3 * 100));
     });
 
     test('Multiplication', () => {
-        inputDevice('×');
-        inputDevice('=');
-
+        inputDevice.inputSequence('× =');
         expect(Number(calculator.displayValue)).toBeCloseTo((2 / 3 * 100) ** 2);  // special behavior, ignores previous number
 
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo((2 / 3 * 100) ** 3, 1);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(19753085, 1); // (2 / 3 * 100) ** 4 with truncation
     });
 
     test('Division', () => {
-        inputDevice('÷');
-        inputDevice('=');
-
+        inputDevice.inputSequence('÷ =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / (2 / 3 * 100));  // special behavior, ignores previous number
 
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBeCloseTo(1 / (2 / 3 * 100) ** 2);
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('= =');
         expect(Number(calculator.displayValue)).toBeCloseTo(1 / (2 / 3 * 100) ** 3);
     });
 });
 
-// No tests of form ''With + and % history [Number] [operator] %', because the % won't do 
+// No tests of form 'With [operator] and % history [Number] [operator] %', because the % won't do 
 // anything after a + or -. If used after a × or ÷, it ignores the history, so there is 
 // no point in including such test suites.
 
 test('[Number] %', () => {
-    inputDevice('2');
-    inputDevice('%');
-
+    inputDevice.inputSequence('2 %');
     expect(Number(calculator.displayValue)).toBe(0);
 
-    inputDevice('1');
-
-    expect(Number(calculator.displayValue)).toBe(1); // should have overwritten
+    inputDevice.input('1'); // should overwrite
+    expect(Number(calculator.displayValue)).toBe(1); 
 });
 
 
 describe('.', () => {
     test('Empty .', () => {
-        inputDevice('.');
-        inputDevice('2');
-
+        inputDevice.inputSequence('. 2');
         expect(Number(calculator.displayValue)).toBeCloseTo(0.2);
     });
 
     test('Should overwrite results', () => {
-        inputDevice('2');
-        inputDevice('=');
-        inputDevice('.');
-
+        inputDevice.inputSequence('2 = .');
         expect(Number(calculator.displayValue)).toBe(0);
     });
 
     test('Should be ignored when a . is already present', () => {
-        inputDevice('1');
-        inputDevice('.');
-        inputDevice('2');
-        inputDevice('.');
-
+        inputDevice.inputSequence('1 . 2 .');
         expect(Number(calculator.displayValue)).toBeCloseTo(1.2);
     });
 
     test('The . should not carry across an entered operator', () => {
-        inputDevice('2');
-        inputDevice('.');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 . + 3 =');
         expect(Number(calculator.displayValue)).toBe(5);
     });
 
     test('Allow leading 0 values after period', () => {
-        inputDevice('.');
-        inputDevice('0');
-        inputDevice('1');
-
+        inputDevice.inputSequence('. 0 1');
         expect(Number(calculator.displayValue)).toBe(0.01);
     });
 });
 
 test('Test CA', () => {
-    inputDevice('2');
-    inputDevice('+');
-    inputDevice('3');
-    inputDevice('=');
-
-    inputDevice('CA');
-
-    inputDevice('√'); // allow overwriting first operand
-    inputDevice('0');
-    inputDevice('='); // if history was kept, this would add 3
-
+    inputDevice.inputSequence('2 + 3 =');
+    inputDevice.input('CA');
+    inputDevice.inputSequence('√ 0 =') // if history was kept, this would add 3
     expect(Number(calculator.displayValue)).toBe(0);
 });
 
 describe('Test CCE', () => {
     test('[Number] CCE', () => {
-        inputDevice('2');
-        inputDevice('CCE');
-
+        inputDevice.inputSequence('2 CCE');
         expect(Number(calculator.displayValue)).toBe(0);
     });
 
     test('[Number] [operator] CCE', () => {
-        inputDevice('2');
-        inputDevice('×'); // operator doesn't matter for this test
-        inputDevice('CCE');
-
+        inputDevice.inputSequence('2 × CCE');  // which operator it is doesn't matter for this test
         expect(Number(calculator.displayValue)).toBe(0);
         expect(calculator.operation).toBeNull();
     });
 
     test('[Number] [operator] [Number] CCE', () => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('CCE');
-
+        inputDevice.inputSequence('2 - 3 CCE');
         expect(Number(calculator.displayValue)).toBe(2);
 
         // keeps operator
-        inputDevice('3');
-        inputDevice('=');
-
-        expect(Number(calculator.displayValue)).toBe(5);
+        inputDevice.inputSequence('3 =');
+        expect(Number(calculator.displayValue)).toBe(2 - 3);
     });
 
     test('[Number] [operator] [Number] CCE CCE', () => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('CCE');
-        inputDevice('CCE');
-
+        inputDevice.inputSequence('2 + 3 CCE CCE');
         expect(Number(calculator.displayValue)).toBe(0);
         expect(calculator.operation).toBeNull();
     });
@@ -896,13 +568,8 @@ describe('Test CCE', () => {
 
 describe('Memory buttons', () => {
     test('Attempting to save 0 skips calculation', () => {
-        inputDevice('2');
-        inputDevice('-');
-        inputDevice('2');
-        inputDevice('M+');
-
-        inputDevice('+');
-        inputDevice('=');
+        inputDevice.inputSequence('2 - 2 M+');
+        inputDevice.inputSequence('+ =');
 
         // if using = instead of M+ (or M-), the 2 is saved as a previous value and result
         // would be 2
@@ -910,254 +577,104 @@ describe('Memory buttons', () => {
     });
 
     test('Memory operator applied after calculation', () => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('±');
-        inputDevice('='); // display = -1, previous = -3
-
-        inputDevice('+');
-        inputDevice('M-');
-
+        inputDevice.inputSequence('2 + 3 ± ='); // result = -1, previous = -3
+        inputDevice.inputSequence('+ M-');
         expect(Number(calculator.displayValue)).toBe(-3 + -1);
 
-        inputDevice('RCM');
-
-        expect(Number(calculator.displayValue)).toBe(0 - (-3 + -1));
+        inputDevice.input('RCM');
+        expect(Number(calculator.displayValue)).toBe(0 - (-3 + -1)); // memory value different from result value
     });
 
     test('Memory operation does not update display', () => {
-        inputDevice('2');
-        inputDevice('M+'); // memory = 2
-        inputDevice('M+');
-
+        inputDevice.inputSequence('2 M+ M+');
         expect(Number(calculator.displayValue)).toBe(2);
 
-        inputDevice('RCM');
-
-        expect(Number(calculator.displayValue)).toBe(4);
+        inputDevice.input('RCM');
+        expect(Number(calculator.displayValue)).toBe(0 + 2 + 2);
     });
 
     test('Memory operation wipes previous', () => {
-        inputDevice('2');
-        inputDevice('+');
-        inputDevice('3');
-        inputDevice('M+');
-
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('2 + 3 M+');
+        inputDevice.inputSequence('+ =');
         expect(Number(calculator.displayValue)).toBe(5);
 
-        inputDevice('=');
-
+        inputDevice.input('=');
         expect(Number(calculator.displayValue)).toBe(10);
     });
 });
 
 describe('Precision limits', () => {
     test('Disallow entering further numbers if 8 numbers are already entered', () => {
-        inputDevice('1');
-        inputDevice('2');
-        inputDevice('3');
-        inputDevice('4');
-        inputDevice('5');
-        inputDevice('6');
-        inputDevice('7');
-        inputDevice('8');
-        inputDevice('9');
-        inputDevice('=');
-
+        inputDevice.inputSequence('1 2 3 4 5 6 7 8 9 =');
         expect(calculator.displayValue).toBe("12345678.");
     });
 
     test('Numbers below 0.0000001 become 0', () => {
-        inputDevice('.');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('2');
-
-        inputDevice('÷');
-        inputDevice('3');
-        inputDevice('=');
-
+        inputDevice.inputSequence('. 0 0 0 0 0 0 2 ÷ 3 =');
         expect(calculator.displayValue).toBe("0.");
     });
 
     test('Numbers above 99999999 drop trailing digits', () => {
-        inputDevice('9');
-        inputDevice('8');
-        inputDevice('7');
-        inputDevice('6');
-        inputDevice('5');
-        inputDevice('4');
-        inputDevice('3');
-        inputDevice('2');
-
-        inputDevice('×');
-        inputDevice('2');
-        inputDevice('=');
-
+        inputDevice.inputSequence('9 8 7 6 5 4 3 2 × 2 =');
         expect(calculator.displayValue).toBe("1.9753086");
     });
 
     test('Decimal point moves more depending on how many digits overflow', () => {
-        inputDevice('1');
-        inputDevice('2');
-        inputDevice('3');
-        inputDevice('4');
-        inputDevice('5');
-        inputDevice('6');
-        inputDevice('7');
-        inputDevice('8');
-
-        inputDevice('×');
-        inputDevice('1');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('=');
-
+        inputDevice.inputSequence('1 2 3 4 5 6 7 8 × 1 0 0 =');
         expect(calculator.displayValue).toBe("12.345678");
     });
 
     test('Trailing 0 values are removed for numbers between minimum and maximum', () => {
-        inputDevice('1');
-        inputDevice('.');
-        inputDevice('2');
-        inputDevice('5');
-
-        inputDevice('×');
-        inputDevice('2');
-        inputDevice('=');
-
+        inputDevice.inputSequence('1 . 2 5 × 2 =');
         expect(calculator.displayValue).toBe("2.5");
     });
 
     test('Trailing 0 values are not removed for truncations of numbers above maximum', () => {
-        inputDevice('1');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-
-        inputDevice('×');
-        inputDevice('1');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('=');
-
+        inputDevice.inputSequence('1 0 0 0 0 0 0 0 × 1 0 0 =');
         expect(calculator.displayValue).toBe("10.000000");
     });
 });
 
 describe('Error state behavior', () => {
     test('Disallow input besides CA and CCE when in error state', () => {
-        inputDevice('1');
-        inputDevice('0');
-
-        inputDevice('×');
-
-        inputDevice('2');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-
-        inputDevice('=');
-
+        inputDevice.inputSequence('1 0 × 2 0 0 0 0 0 0 0 =');
         expect(calculator.inErrorState).toBe(true);
 
-        inputDevice('+');
-        inputDevice('=');
-
+        inputDevice.inputSequence('+ =');
         expect(calculator.displayValue).toBe("2.0000000");
     });
 
     test('CA resets everything, including the error state', () => {
         calculator.inErrorState = true;
-        inputDevice('CA');
-
+        inputDevice.input('CA');
         expect(calculator.inErrorState).toBe(false);
     });
 
     test('CCE clears error state, retains other calculator state', () => {
-        inputDevice('2');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-
-        inputDevice('×');
-        inputDevice('1');
-        inputDevice('0');
-        inputDevice('='); // previous = 20000000
-
+        inputDevice.inputSequence('2 0 0 0 0 0 0 0 × 1 0 =');  // previous = 20000000
         expect(calculator.inErrorState).toBe(true);
 
-        inputDevice('CCE');
-
-        inputDevice('=');
-
-        expect(calculator.displayValue).toBe("40000000.");
+        inputDevice.inputSequence('CCE =');
+        expect(calculator.displayValue).toBe("40000000."); // 2 * 20000000
     });
 
 
     test('Division of nonzero value by 0 also causes error state', () => {
-        inputDevice('3');
-        inputDevice('÷');
-        inputDevice('0');
-        inputDevice('=');
-
+        inputDevice.inputSequence('3 ÷ 0 =');
         expect(calculator.inErrorState).toBe(true);
     });
 
     test('Division of 0 value by 0 does not cause error state', () => {
-        inputDevice('0');
-        inputDevice('÷');
-        inputDevice('0');
-        inputDevice('=');
-
+        inputDevice.inputSequence('0 ÷ 0 =');
         expect(calculator.inErrorState).toBe(false);
     });
 
     test('Error after error', () => {
-        inputDevice('2');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-        inputDevice('0');
-
-        inputDevice('×');
-
-        inputDevice('1');
-        inputDevice('0');
-        inputDevice('0');
-
-        inputDevice('='); // previous = 20000000
-
+        inputDevice.inputSequence('2 0 0 0 0 0 0 0 × 1 0 0 ='); // previous = 20000000
         expect(calculator.inErrorState).toBe(true);
         expect(calculator.displayValue).toBe("20.000000");
 
-        inputDevice('CCE');
-
-        inputDevice('=');
-
-        expect(calculator.displayValue).toBe("4.0000000");
+        inputDevice.inputSequence('CCE =');
+        expect(calculator.displayValue).toBe("4.0000000"); // 20 * 20000000
     });
 });
