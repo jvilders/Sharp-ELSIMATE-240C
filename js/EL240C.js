@@ -52,7 +52,7 @@ class Calculator {
         this.previous = "0";
         this.previousOperation = this.add;
 
-        this.display = 0;
+        this.operandDisplayed = 0;
 
         this.overwriteNumber = true;
         this.periodAdded = false;
@@ -64,7 +64,7 @@ class Calculator {
     }
 
     get displayValue(){
-        return this.operands[this.display] + (this.operands[this.display].includes('.') ? '' : '.')
+        return this.operands[this.operandDisplayed] + (this.operands[this.operandDisplayed].includes('.') ? '' : '.')
     }
 
     get displayState(){
@@ -82,11 +82,11 @@ class Calculator {
             previousOperation: this.previousOperation,
             operands: this.operands.toString(),
             operation: this.operation,
-            display: this.display,
+            display: this.operandDisplayed,
         }
     }
 
-    isValidInput(chr){
+    _isValidInput(chr){
         return this.validInputs.has(chr)
     }
 
@@ -102,7 +102,7 @@ class Calculator {
                 return n.toString();
             }
     
-            return Number(n.toFixed(this.MAXDIGITS).slice(0, this.MAXDIGITS + 1 + (n < 0))).toString(); // +1 because guaranteed '.'
+            return Number(n.toFixed(this.MAXDIGITS).slice(0, this.MAXDIGITS + 1 + (n < 0))).toString();
         }
     }
 
@@ -118,7 +118,7 @@ class Calculator {
 
         if(this.operands[1] !== null){
             this.operands[1] = null;
-            this.display = 0;
+            this.operandDisplayed = 0;
         } else {
             this.operands[0] = "0";
             this.operation = null;
@@ -134,15 +134,10 @@ class Calculator {
             return
         }
 
-        if(this.operation === null){
-            this.operands[0] = this.memoryRegister;
-        }else if(this.operands[1] === null){
-            this.operands[0] = this.memoryRegister;
+        if(this.operands[1] === null){
             this.operation = null;
-        }else{
-            this.operands[1] = this.memoryRegister;
         }
-
+        this.operands[this.operandDisplayed] = this.memoryRegister;
         this.hasReadMemory = true;
     }
 
@@ -151,7 +146,7 @@ class Calculator {
     }
 
     memorySubtract(){
-        this._memoryOperation(this.subtract.bind(this)); // this.subtract calls this.add, needs reference
+        this._memoryOperation(this.subtract.bind(this)); // this.subtract calls this.add, needs reference to this
     }
 
     _memoryOperation(operator){
@@ -169,19 +164,21 @@ class Calculator {
                 lOperand = this.operands[0]
             }
 
-            const rOperand = this.operands[this.display];
-
-            this.operands[0] = this.operation.call(this, lOperand, rOperand).toString();
+            const rOperand = this.operands[this.operandDisplayed];
+            
+            this.operands[0] = this._truncateNumber(this.operation.call(this, lOperand, rOperand));
         }
         
-        this.memoryRegister = operator(this.memoryRegister, this.operands[0]).toString();
+        this.memoryRegister =  this._truncateNumber(operator(this.memoryRegister, this.operands[0]));
 
-        this.previousOperation = this.add;
-        this.overwriteNumber = true;
+
         this.previous = "0";
+        this.previousOperation = this.add;
+        this.operandDisplayed = 0;
         this.operation = null;
         this.operands[1] = null;
-        this.display = 0;
+        this.overwriteNumber = true;
+
     }
 
     // key pad button function
@@ -197,7 +194,7 @@ class Calculator {
         let implicitValue
         if(chr !== '.'){
             implicitValue = "";
-            this.display = targetOperand;
+            this.operandDisplayed = targetOperand;
         } else {
             if(this.periodAdded){
                 return;
@@ -224,7 +221,7 @@ class Calculator {
             // if after an operator, special behavior: apply sqrt to first operand, insert as second
             this.operands[1] = this._truncateNumber(this.unaryOperators['√'].call(this, this.operands[0]))
             // this.operands[1] = this.unaryOperators['√'].call(this, this.operands[0]).toString();
-            this.display = 1;
+            this.operandDisplayed = 1;
         } else {
             this.operands[targetOperand] = this.unaryOperators[chr].call(this, this.operands[targetOperand]).toString();
         }
@@ -283,7 +280,7 @@ class Calculator {
         this.previousOperation = this.operation || this.previousOperation;
 
 
-        this.display = 0;
+        this.operandDisplayed = 0;
         this.operation = null
         this.operands[1] = null;
         this.overwriteNumber = true;
@@ -336,7 +333,7 @@ class Calculator {
         this.previous = newPrevious;
         this.previousOperation = this.operation
 
-        this.display = 0;
+        this.operandDisplayed = 0;
         this.operation = null
         this.operands[1] = null;
         this.overwriteNumber = true;
@@ -344,7 +341,7 @@ class Calculator {
 
 
     input(chr){
-        if(!this.isValidInput(chr)){
+        if(!this._isValidInput(chr)){
             throw new Error(`Input ${chr} is not a valid input`);
         }
 
