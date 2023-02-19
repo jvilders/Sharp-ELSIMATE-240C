@@ -1,4 +1,4 @@
-# Sharp-ELSIMATE-240C
+# Sharp ELSI MATE EL-240C
 
 As the closer for the foundational course of the [Odin Project](https://www.theodinproject.com), I made a calculator with a user interface using HTML, CSS, and JavaScript. I decided to make it more difficult for myself (much more than I'd expected) by replicating an old calculator I had lying around at home: The Sharp ELSI MATE EL-240C.
 
@@ -25,7 +25,7 @@ I'd run tests in prior Odin Project exercises using Jest, but this was the first
 I used Emmett abbreviations to speed up creating multiple similar HTML elements. Not technically a feature of HTML, but definitely cool.
 
 #### Event listeners on parents
-Instead of attaching event listeners on each keypad button individually, I can simply attach it to the parent element and rely on the click event bubbling up from the specific button. It's a small thing, but I really like how clearn it keeps the code that attaches event listeners.
+Instead of attaching event listeners on each keypad button individually, I can simply attach it to the parent element and rely on the click event bubbling up from the specific button. It's a small thing, but I really like how clear it keeps the code that attaches event listeners.
 
 #### Defer on script tags
 Don't have to worry about when the browser parser hits the script element and pushes the script code onto the stack if you just defer that until the DOM is ready. Frees me from having to worry about it, so another small, but nice addition.
@@ -39,4 +39,4 @@ I tried to be a bit more structured about defining root variables for things lik
 I've only used it here to make it look like a button is getting pressed down, but even by doing that I know the possibilities that you can use this for are endless.
 
 #### Fonts are a pain
-This is the first time I've searched for fonts myself that matched what I wanted and it's hard. I'm sure it's partly because I don't know much about typography, so I lack the vocabulary to really describe what fonts look like and what differentiaties them. I assume web developers build their own collections of fonts they've gathered (whose license allows using them for those projects) that they can then just drop into the various projects they work on, so I guess this is the start of my collection.
+This is the first time I've searched for fonts myself that matched what I wanted and it's hard. I'm sure it's partly because I don't know much about typography, so I lack the vocabulary to really describe what fonts look like and what differentiates them. I assume web developers build their own collections of fonts they've gathered (whose license allows using them for those projects) that they can then just drop into the various projects they work on, so I guess this is the start of my collection.

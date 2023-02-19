@@ -7,7 +7,7 @@ const minusIndicator = document.querySelector('.display-cell.modifier-cell > div
 const errorIndicator = document.querySelector('.display-cell.modifier-cell > div:nth-child(3)');
 const displayNumberCells = Array.from(document.querySelectorAll('.number-cell')).reverse();
 
-// interface for updating display
+// Interface for updating display
 let previousDotCell = displayNumberCells[displayNumberCells.length - 1].children[1]
 function updateDisplay(value){
     const valueWithoutSign = value.replace('-', '');

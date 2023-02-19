@@ -1,6 +1,6 @@
 # Calculator logic
 
-What follows is an explanation of the mental model I've made of how the Sharp ELSI MATE EL-240C (henceworth just 'calculator') works. I make no guarantees that this mental model is true, only that it has not been disproven by all tests I've performed on the physical calculator so far (tests are in [js/EL240C.test.js](./js/EL240C.test.js)).
+What follows is an explanation of the mental model I've made of how the Sharp ELSI MATE EL-240C (henceforth just 'calculator') works. I make no guarantees that this mental model is true, only that it has not been disproven by all tests I've performed on the physical calculator so far (tests are in [js/EL240C.test.js](./js/EL240C.test.js)).
 
 In any input snippets, for consistency with the calculator keypad, I will use `×` for multiplication and `÷` for division.
 
@@ -204,6 +204,6 @@ Below is the full table that documents how the calculator selects how these valu
 |                           |       |           | Operation         | Operation
 |                           |       |           | Right operand     | Right Operand / 100
 
-*The `%` evaluator does not operate in the 'Only Number' case so is ommitted from the table.
+*The `%` evaluator does not operate in the 'Only Number' case so is omitted from the table.
 
 There are other details like how the calculator truncates numbers and handles error states, but those are edge cases and are reasonably documented in the code itself. Armed with the above table and mental model you should be able to understand any observed result from the calculator. If you made it this far and you want to understand it on an even deeper level (I can't for the life of me imagine why, but that's okay), please read the source code for the implementation directly.
