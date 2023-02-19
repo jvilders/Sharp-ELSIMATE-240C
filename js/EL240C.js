@@ -180,6 +180,7 @@ class Calculator {
             this.calculate("0", lOperand, operation, rOperand);
         }
         this.memoryRegister = this.truncateNumber(operator(this.memoryRegister, this.operands[0]));
+        this.overwriteNumber = true;
     }
 
     // key pad button function

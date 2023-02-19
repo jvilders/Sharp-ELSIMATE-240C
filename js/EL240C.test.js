@@ -642,13 +642,18 @@ describe('Memory buttons', () => {
         inputDevice.inputSequence('- 2 M+');
         inputDevice.inputSequence('9 RCM');
         expect(Number(calculator.displayValue)).toBe(-2);
-    })
+    });
 
     test('Reading preserves operation', () => {
         inputDevice.inputSequence('- 2 M+');
         inputDevice.inputSequence('9 × RCM =');
         expect(Number(calculator.displayValue)).toBe(-18);
-    })
+    });
+
+    test('Overwrite after memory operation', () => {
+        inputDevice.inputSequence('9 M+ 1');
+        expect(Number(calculator.displayValue)).toBe(1);
+    });
 });
 
 describe('Precision limits', () => {
