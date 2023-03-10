@@ -131,6 +131,7 @@ class Calculator {
         } else {
             this.operands[0] = "0";
             this.operation = null;
+            this.overwriteNumber = true;
         }
     }
 

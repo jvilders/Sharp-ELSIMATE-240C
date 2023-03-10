@@ -600,6 +600,11 @@ describe('Test CCE', () => {
         expect(Number(calculator.displayValue)).toBe(0);
         expect(calculator.operation).toBeNull();
     });
+
+    test('[Number] CCE [Number]', () => {
+        inputDevice.inputSequence('2 CCE 2');
+        expect(calculator.displayValue).toBe("2.");
+    });
 });
 
 describe('Memory buttons', () => {
